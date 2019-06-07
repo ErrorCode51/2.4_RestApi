@@ -1,15 +1,6 @@
-from flask import Flask, abort
-import database.dbMain as dbMain
+from flask import Flask
+import routes.GET as get
 
 app = Flask(__name__)
-
-# TODO: routes in een apart bestand zetten
-@app.route('/<id>/')
-def hello_world(id):
-    data = dbMain.getData(id)
-    try:
-        return('{"id": ' + str(data.id) + ', "data": "' + data.data + '" }')
-    except AttributeError:
-        abort(404)
-
+app.register_blueprint(get.bp)
 app.run()

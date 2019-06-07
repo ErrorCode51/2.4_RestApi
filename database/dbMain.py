@@ -11,7 +11,12 @@ meta.create_all(engine)
 # conn = engine.connect()
 # result = conn.execute(ins)
 
-def getData(id):
-    query = exampleTable.select().where(exampleTable.c.id == id)
+# Selects the data of the given type with the given id
+def selectById(type, id):
+    query = type.select().where(type.c.id == id)
     return engine.connect().execute(query).first()
 
+# Selects all stored objects of the given type
+def selectAllOffType(type):
+    query = type.select()
+    return engine.connect().execute(query)
