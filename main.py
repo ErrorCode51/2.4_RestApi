@@ -1,6 +1,8 @@
 from flask import Flask
-import routes.GET as get
+from routes.GET import getBP
+from routes.POST import postBP
 
 app = Flask(__name__)
-app.register_blueprint(get.bp)
+app.register_blueprint(getBP)
+app.register_blueprint(postBP)
 app.run()

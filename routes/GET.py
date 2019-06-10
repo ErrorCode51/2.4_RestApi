@@ -1,33 +1,37 @@
 from flask import abort, Blueprint
 import database.dbMain as dbMain
 import database.dbModels as dbModels
+import sqlalchemy
 
-bp = Blueprint('bp', __name__) # a blueprint to add all routes to, so the Flask instance can import them in one line of code
+getBP = Blueprint('getBP', __name__) # a blueprint to add all routes to, so the Flask instance can import them in one line of code
 
-@bp.route('/<id>/', methods=['get'])
-def exampleDataById(id):
-    data = dbMain.selectById(dbModels.exampleTable, id)
+@getBP.route('/user/<id>/', methods=['get'])
+def getUserById(id):
+    data = dbMain.selectObjectById(dbModels.user, id)
+    print(data)
     try:
-        return('{"id": ' + str(data.id) + ', "data": "' + data.data + '" }')
+        return('{"id": ' + str(data.id)
+            + ', "userName": "' + data.userName
+            + '", "email": "' + data.email
+            + '", "passwordHash": "' + data.passwordHash
+            + '", "profilePic": ' + (lambda pp: 'null' if pp == None else ('"' + pp + '"'))(data.profilePic)
+            + ' }')
     except AttributeError:
         abort(404)
 
-@bp.route('/', methods=['get'])
-def allExampleData():
-    data = dbMain.selectAllOffType(dbModels.exampleTable)
+@getBP.route('/project/<id>', methods=['get'])
+def getProjectByID(id):
+    project = dbMain.selectObjectById(dbModels.project, id)
     try:
-        json = '{['
-        json += ','.join(['{"id": ' + str(d.id) + ', "data": "' + d.data + '" }' for d in data])
-        json += ']}'
+        json = '{"id": ' + str(project.id) \
+            + ', "owner_id": ' + str(project.owner_id) \
+            + ', "name": "' + project.name \
+            + '", "description": ' + project.description
+        if project.participants: # if the list of participants is not empty
+            json += ', "participants": ['
+            ', '.join([p.user.id for p in project.participants])
+            json += ']'
+        json += '}'
         return json
-    except AttributeError as e:
-        print(e)
-        abort(404)
-
-@bp.route('/user/<id>/', methods=['get'])
-def userById(id):
-    data = dbMain.selectById(dbModels.user, id)
-    try:
-        return('{"id": ' + str(data.id) + ', "userName": "' + data.userName + ', "email": "' + data.email + ', "passwordHash": "' + data.passwordHash + ', "profilePic": "' + data.profilePic + '" }')
     except AttributeError:
         abort(404)
