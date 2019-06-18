@@ -15,7 +15,7 @@ def getUserById(id):
             + '", "email": "' + data.email
             + '", "passwordHash": "' + data.passwordHash
             + '", "profilePic": ' + (lambda pp: 'null' if pp == None else ('"' + pp + '"'))(data.profilePic)
-            + ' }')
+            + ' }'), 200, {'Content-Type': 'application/json; charset=utf-8'}
     except AttributeError:
         abort(404)
 
@@ -24,14 +24,15 @@ def getProjectByID(id):
     project = dbMain.selectObjectById(dbModels.project, id)
     try:
         json = '{"id": ' + str(project.id) \
-            + ', "owner_id": ' + str(project.owner_id) \
+            + ', "ownerId": ' + str(project.ownerId) \
             + ', "name": "' + project.name \
-            + '", "description": ' + project.description
-        if project.participants: # if the list of participants is not empty
-            json += ', "participants": ['
-            ', '.join([p.user.id for p in project.participants])
-            json += ']'
+            + '", "description": "' + project.description \
+            + '", "participants": ['
+        if len(project.participants) != 0:
+            json += ', '.join([p.user.id for p in project.participants])
+        json += ']'
         json += '}'
-        return json
-    except AttributeError:
+        return json, 200, {'Content-Type': 'application/json; charset=utf-8'}
+    except AttributeError as e:
+        print(e)
         abort(404)

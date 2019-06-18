@@ -13,6 +13,7 @@ class user(Base):
     email = Column(String, nullable=False)
     passwordHash = Column(String, nullable=False)
     profilePic = Column(String)
+    projects = relationship("project")
 
 
 # a post made by a user, similar to posts on traditional social media
@@ -33,7 +34,7 @@ project_participation = Table(
 class project(Base):
     __tablename__  = 'project'
     id = Column(Integer, primary_key=True)                                  # a unique id
-    owner_id = Column(Integer, ForeignKey('user.id'), nullable=False)       # the owner of the project, will be set to the user that created the project by default
-    name =Column(String, nullable=False)                                    # the name of the project
+    ownerId = Column(Integer, ForeignKey('user.id'), nullable=False)        # the id of the owner of the project, will be set to the user that created the project by default
+    name = Column(String, nullable=False)                                   # the name of the project
     description = Column(String)                                            # (optional), a description of the project
-    participants = relationship('user', secondary= project_participation)   # the participants fo this project
+    participants = relationship('user', secondary= project_participation)   # the participants of this project

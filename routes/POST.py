@@ -15,5 +15,15 @@ def postUser():
                                                                           profilePic = None  #TODO: dit implementeren
                                                                          )
                                       )
-               [0])
+               [0]), 201
+
+@postBP.route('/project/', methods=['post'])
+def postProject():
+    return '/project/' +\
+           str(dbMain.execInsertQuery(dbModels.project.__table__.insert().values(ownerId= int(request.form.get('owner_id')),
+                                                                          name= request.form.get('project_name'),
+                                                                          description = request.form.get('description')
+                                                                         )
+                                      )
+               [0]), 201
 
