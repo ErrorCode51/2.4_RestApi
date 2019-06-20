@@ -22,15 +22,18 @@ def getUserById(id):
 @getBP.route('/project/<id>', methods=['get'])
 def getProjectByID(id):
     project = dbMain.selectObjectById(dbModels.project, id)
+    print(project)
     try:
         json = '{"id": ' + str(project.id) \
             + ', "ownerId": ' + str(project.ownerId) \
             + ', "name": "' + project.name \
-            + '", "description": "' + project.description \
-            + '", "participants": ['
-        if len(project.participants) != 0:
-            json += ', '.join([p.user.id for p in project.participants])
-        json += ']'
+            + '", "description": "' + project.description + '", '
+        if project.participants:
+            json += '"participants": [' \
+            + ', '.join([str(u.id) for u in project.participants]) \
+            + ']'
+        else:
+            json += '"participants": null'
         json += '}'
         return json, 200, {'Content-Type': 'application/json; charset=utf-8'}
     except AttributeError as e:

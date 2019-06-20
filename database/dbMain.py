@@ -1,5 +1,6 @@
 import sqlalchemy
 from database.dbModels import Base
+import database.dbModels as dbModels
 from sqlalchemy.orm import sessionmaker
 
 # define the type of datebase and creates a connection to it
@@ -8,11 +9,21 @@ engine =  sqlalchemy.create_engine('sqlite:///test.db', echo=True) # sqlite data
 from database.dbModels import Base
 Base.metadata.create_all(engine)
 
-# Selects the data of the given type with the given id
-def selectObjectById(table, id):
-    type = table.__table__
-    query = type.select().where(type.c.id == id)
-    return engine.connect().execute(query).first()
+Session = sessionmaker(bind= engine)
 
-def execInsertQuery(query):
-    return engine.connect().execute(query).inserted_primary_key
+def selectObjectById(table, id):
+    session = Session()
+    return session.query(table).filter(table.id == id).first()
+
+
+def selectObjectByIdUsingSession(table, id, session):
+    return session.query(table).filter(table.id == id).first()
+
+
+# Inserts an object and returns the given id
+def insertDbObject(object):
+    session = Session()
+    session.add(object)
+    session.flush()
+    session.commit()
+    return object.id

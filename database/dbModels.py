@@ -5,6 +5,12 @@ from sqlalchemy.orm import relationship
 
 Base = declarative_base()
 
+project_participation = Table('project_participation', Base.metadata,
+    Column('project_id', Integer, ForeignKey('project.id')),
+    Column('user_id', Integer, ForeignKey('user.id'))
+)
+
+
 # a user account
 class user(Base):
     __tablename__ = 'user'
@@ -13,7 +19,7 @@ class user(Base):
     email = Column(String, nullable=False)
     passwordHash = Column(String, nullable=False)
     profilePic = Column(String)
-    projects = relationship("project")
+    projects = relationship('project', secondary= project_participation)
 
 
 # a post made by a user, similar to posts on traditional social media
@@ -24,12 +30,6 @@ class post(Base):
     title = Column(String(128))
     message = Column(String(1024))
 
-
-project_participation = Table(
-    'project_participation', Base.metadata,
-    Column('project_id', Integer, ForeignKey('project.id')),
-    Column('user_id', Integer, ForeignKey('user.id'))
-)
 
 class project(Base):
     __tablename__  = 'project'
