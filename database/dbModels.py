@@ -5,9 +5,16 @@ from sqlalchemy.orm import relationship
 
 Base = declarative_base()
 
+# a member of a project (not the owner)
 project_participation = Table('project_participation', Base.metadata,
     Column('project_id', Integer, ForeignKey('project.id')),
     Column('user_id', Integer, ForeignKey('user.id'))
+)
+
+# a contact (similar to a friend on facebook or a contact on linkedin)
+contact = Table('contact', Base.metadata,
+        Column('user1_id', Integer, ForeignKey('user.id')),
+        Column('user1_id', Integer, ForeignKey('user.id'))
 )
 
 
@@ -16,7 +23,7 @@ class user(Base):
     __tablename__ = 'user'
     id = Column(Integer, primary_key=True)
     userName = Column(String(32), nullable=False)
-    email = Column(String, nullable=False)
+    email = Column(String, nullable=False, unique= True)
     passwordHash = Column(String, nullable=False)
     profilePic = Column(String)
     projects = relationship('project', secondary= project_participation)

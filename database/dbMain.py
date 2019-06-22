@@ -1,15 +1,14 @@
 import sqlalchemy
 from database.dbModels import Base
-import database.dbModels as dbModels
 from sqlalchemy.orm import sessionmaker
+import database.dbModels as dbModels
 
 # define the type of datebase and creates a connection to it
 engine =  sqlalchemy.create_engine('sqlite:///test.db', echo=True) # sqlite database in the root dir, writes the db operations to the terminal
 # get the database model and write the tables to the database
-from database.dbModels import Base
 Base.metadata.create_all(engine)
-
 Session = sessionmaker(bind= engine)
+
 
 def selectObjectById(table, id):
     session = Session()
@@ -27,3 +26,13 @@ def insertDbObject(object):
     session.flush()
     session.commit()
     return object.id
+
+
+def getUserByUserName(username):
+    session = Session()
+    return session.query(dbModels.user).filter(dbModels.user.userName == username).first()
+
+
+def getUserByEmail(email):
+    session = Session()
+    return session.query(dbModels.user).filter(dbModels.user.email == email).first()

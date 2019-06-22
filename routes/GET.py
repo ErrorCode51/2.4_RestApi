@@ -5,24 +5,45 @@ import sqlalchemy
 
 getBP = Blueprint('getBP', __name__) # a blueprint to add all routes to, so the Flask instance can import them in one line of code
 
+def genUserJson(user):
+    if not isinstance(user, dbModels.user):
+        raise AttributeError('Input is not a user object')
+    return ('{"id": ' + str(user.id)
+            + ', "userName": "' + user.userName
+            + '", "email": "' + user.email
+            + '", "passwordHash": "' + user.passwordHash
+            + '", "profilePic": ' + (lambda pp: 'null' if pp == None else ('"' + pp + '"'))(user.profilePic)
+            + ' }')
+
 @getBP.route('/user/<id>/', methods=['get'])
-def getUserById(id):
+def getUserByName(id):
     data = dbMain.selectObjectById(dbModels.user, id)
-    print(data)
     try:
-        return('{"id": ' + str(data.id)
-            + ', "userName": "' + data.userName
-            + '", "email": "' + data.email
-            + '", "passwordHash": "' + data.passwordHash
-            + '", "profilePic": ' + (lambda pp: 'null' if pp == None else ('"' + pp + '"'))(data.profilePic)
-            + ' }'), 200, {'Content-Type': 'application/json; charset=utf-8'}
+        return(genUserJson(data)), 200, {'Content-Type': 'application/json; charset=utf-8'}
     except AttributeError:
         abort(404)
+
+@getBP.route('/user/email/<email>/', methods=['get'])
+def getUserByEmail(email):
+    data = dbMain.getUserByEmail(email)
+    try:
+        return(genUserJson(data)), 200, {'Content-Type': 'application/json; charset=utf-8'}
+    except AttributeError:
+        abort(404)
+
+
+@getBP.route('/user/username/<username>/', methods=['get'])
+def getUserById(username):
+    data = dbMain.getUserByUserName(username)
+    try:
+        return(genUserJson(data)), 200, {'Content-Type': 'application/json; charset=utf-8'}
+    except AttributeError:
+        abort(404)
+
 
 @getBP.route('/project/<id>', methods=['get'])
 def getProjectByID(id):
     project = dbMain.selectObjectById(dbModels.project, id)
-    print(project)
     try:
         json = '{"id": ' + str(project.id) \
             + ', "ownerId": ' + str(project.ownerId) \
