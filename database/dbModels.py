@@ -18,6 +18,13 @@ contact = Table('contact', Base.metadata,
 )
 
 
+# a post in a project, similar to a post in a facebook group
+post_in_project = Table('post_in_project', Base.metadata,
+        Column('post', Integer, ForeignKey('post.id')),
+        Column('project', Integer, ForeignKey('project.id'))
+)
+
+
 # a user account
 class user(Base):
     __tablename__ = 'user'
@@ -46,3 +53,4 @@ class project(Base):
     name = Column(String, nullable=False)                                   # the name of the project
     description = Column(String)                                            # (optional), a description of the project
     participants = relationship('user', secondary= project_participation)   # the participants of this project
+    # posts = relationship('post', backref= 'project')

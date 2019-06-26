@@ -50,6 +50,20 @@ def getUserById(username):
         abort(404)
 
 
+@getBP.route('/post/<post_id>', methods=['get'])
+def getPostByID(post_id):
+    data = dbMain.selectObjectById(dbModels.post, post_id)
+    try:
+        return('{"id":' + str(data.id)
+               + ', "user_id": ' + str(data.user_id)
+               + ', "title": "' + data.title
+               + '", "message": "' + data.message
+               + '"}')\
+            , 200, {'Content-Type': 'application/json; charset=utf-8'}
+    except AttributeError:
+        abort(404)
+
+
 @getBP.route('/project/<id>/', methods=['get'])
 def getProjectByID(id):
     print('/project/<id>/')

@@ -52,3 +52,13 @@ def addParticipantToProject(project_id):
     s.commit()
     return '/project/' + str(project_id), 205
 
+@postBP.route('/post/', methods=['post'])
+def addPost():
+    return '/post/' + \
+           str(dbMain.insertDbObject(dbModels.post(user_id= request.form.get('user_id'),
+                                                   title= request.form.get('title'),
+                                                   message= request.form.get('message')
+                                                   )
+                                     )
+               ), 201
+

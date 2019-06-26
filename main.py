@@ -6,6 +6,4 @@ app = Flask(__name__)
 app.register_blueprint(getBP)
 app.register_blueprint(postBP)
 
-print(app.url_map)
-
 app.run()
