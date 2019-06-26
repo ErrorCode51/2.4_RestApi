@@ -17,6 +17,22 @@ def postUser():
                                      )
                ), 201
 
+
+@postBP.route('/user/<user_id>/contact/', methods=['post'])
+def addPContacts(user_id):
+    contactID = int(request.form.get('contact_id'))
+    s = dbMain.Session()
+    u1 = dbMain.selectObjectByIdUsingSession(dbModels.user, user_id, s)
+    u2 = dbMain.selectObjectByIdUsingSession(dbModels.user, contactID, s)
+    if u2 not in u1.contacts and user_id != contactID:
+        print('inside if statement')
+        u1.contacts.append(u2)
+        u2.contacts.append(u1)
+        s.commit()
+        return '/user/' + str(user_id), 205
+    return '/user/' + str(user_id), 409
+
+
 @postBP.route('/project/', methods=['post'])
 def postProject():
     return '/project/' +\

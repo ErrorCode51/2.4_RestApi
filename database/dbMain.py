@@ -19,6 +19,11 @@ def selectObjectByIdUsingSession(table, id, session):
     return session.query(table).filter(table.id == id).first()
 
 
+def selectAllObjectByType(table):
+    session = Session()
+    return session.query(table)
+
+
 # Inserts an object and returns the given id
 def insertDbObject(object):
     session = Session()

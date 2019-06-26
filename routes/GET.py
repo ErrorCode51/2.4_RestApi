@@ -13,7 +13,9 @@ def genUserJson(user):
             + '", "email": "' + user.email
             + '", "passwordHash": "' + user.passwordHash
             + '", "profilePic": ' + (lambda pp: 'null' if pp == None else ('"' + pp + '"'))(user.profilePic)
+            + ', "contacts": ' + (lambda contacts: 'null' if not contacts else '[' + ', '.join([str(c.id) for c in contacts]) + ']')(user.contacts)
             + ' }')
+
 
 @getBP.route('/user/<id>/', methods=['get'])
 def getUserByName(id):
@@ -23,6 +25,7 @@ def getUserByName(id):
     except AttributeError:
         abort(404)
 
+
 @getBP.route('/user/email/<email>/', methods=['get'])
 def getUserByEmail(email):
     data = dbMain.getUserByEmail(email)
@@ -30,6 +33,12 @@ def getUserByEmail(email):
         return(genUserJson(data)), 200, {'Content-Type': 'application/json; charset=utf-8'}
     except AttributeError:
         abort(404)
+
+
+@getBP.route('/user/all/', methods=['get'])
+def getAllUsers():
+    users = dbMain.selectAllObjectByType(dbModels.user)
+    return '{"users": [' + ', '.join([genUserJson(u) for u in users]) + ']}', 200, {'Content-Type': 'application/json; charset=utf-8'}
 
 
 @getBP.route('/user/username/<username>/', methods=['get'])
@@ -41,9 +50,11 @@ def getUserById(username):
         abort(404)
 
 
-@getBP.route('/project/<id>', methods=['get'])
+@getBP.route('/project/<id>/', methods=['get'])
 def getProjectByID(id):
+    print('/project/<id>/')
     project = dbMain.selectObjectById(dbModels.project, id)
+    print(project)
     try:
         json = '{"id": ' + str(project.id) \
             + ', "ownerId": ' + str(project.ownerId) \

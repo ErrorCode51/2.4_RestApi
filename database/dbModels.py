@@ -1,5 +1,5 @@
 # In this file, the database model is defined
-from sqlalchemy import MetaData, Table, Column, Integer, String, ForeignKey
+from sqlalchemy import Table, Column, Integer, String, ForeignKey, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
@@ -7,14 +7,14 @@ Base = declarative_base()
 
 # a member of a project (not the owner)
 project_participation = Table('project_participation', Base.metadata,
-    Column('project_id', Integer, ForeignKey('project.id')),
-    Column('user_id', Integer, ForeignKey('user.id'))
+    Column('project_id', Integer, ForeignKey('project.id'), primary_key= True),
+    Column('user_id', Integer, ForeignKey('user.id'), primary_key= True)
 )
 
 # a contact (similar to a friend on facebook or a contact on linkedin)
 contact = Table('contact', Base.metadata,
         Column('user1_id', Integer, ForeignKey('user.id')),
-        Column('user1_id', Integer, ForeignKey('user.id'))
+        Column('user2_id', Integer, ForeignKey('user.id'))
 )
 
 
@@ -27,6 +27,7 @@ class user(Base):
     passwordHash = Column(String, nullable=False)
     profilePic = Column(String)
     projects = relationship('project', secondary= project_participation)
+    contacts = relationship('user', secondary= contact, primaryjoin=id==contact.c.user1_id, secondaryjoin=id==contact.c.user2_id)
 
 
 # a post made by a user, similar to posts on traditional social media
