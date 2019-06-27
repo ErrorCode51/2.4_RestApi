@@ -41,3 +41,9 @@ def getUserByUserName(username):
 def getUserByEmail(email):
     session = Session()
     return session.query(dbModels.user).filter(dbModels.user.email == email).first()
+
+
+def deleteObjectByID(table, id):
+    session = Session()
+    session.query(table).filter(table.id == id).first().delete()
+    session.commit()

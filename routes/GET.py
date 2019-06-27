@@ -1,7 +1,6 @@
 from flask import abort, Blueprint, jsonify
 import database.dbMain as dbMain
 import database.dbModels as dbModels
-import sqlalchemy
 
 getBP = Blueprint('getBP', __name__) # a blueprint to add all routes to, so the Flask instance can import them in one line of code
 

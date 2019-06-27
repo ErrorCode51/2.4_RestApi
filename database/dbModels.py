@@ -54,3 +54,4 @@ class project(Base):
     description = Column(String)                                            # (optional), a description of the project
     participants = relationship('user', secondary= project_participation)   # the participants of this project
     # posts = relationship('post', backref= 'project')
+    # TODO: link posts to projects
