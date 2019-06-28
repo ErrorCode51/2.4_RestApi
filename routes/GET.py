@@ -84,7 +84,7 @@ def getProjectByID(id):
     project = dbMain.selectObjectById(dbModels.project, id)
     projectDict = project.__dict__
     projectDict['participants'] = (lambda participants: None if not participants else [p.id for p in participants])(project.participants)
-    print(project)
+    projectDict['posts'] = (lambda posts: None if not posts else [p.id for p in posts])(project.posts)
     try:
         return toJson(project.__dict__), 200
     except AttributeError as e:

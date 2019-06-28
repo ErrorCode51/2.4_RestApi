@@ -44,6 +44,7 @@ class post(Base):
     user_id = Column(Integer, ForeignKey('user.id'), nullable=False)
     title = Column(String(128))
     message = Column(String(1024))
+    project_id = Column(Integer, ForeignKey('project.id'))
 
 
 class project(Base):
@@ -53,5 +54,5 @@ class project(Base):
     name = Column(String, nullable=False)                                   # the name of the project
     description = Column(String)                                            # (optional), a description of the project
     participants = relationship('user', secondary= project_participation)   # the participants of this project
-    # posts = relationship('post', backref= 'project')
+    posts = relationship('post')
     # TODO: link posts to projects

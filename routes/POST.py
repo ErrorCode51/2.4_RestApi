@@ -25,7 +25,6 @@ def addPContacts(user_id):
     u1 = dbMain.selectObjectByIdUsingSession(dbModels.user, user_id, s)
     u2 = dbMain.selectObjectByIdUsingSession(dbModels.user, contactID, s)
     if u2 not in u1.contacts and user_id != contactID:
-        print('inside if statement')
         u1.contacts.append(u2)
         u2.contacts.append(u1)
         s.commit()
@@ -54,11 +53,15 @@ def addParticipantToProject(project_id):
 
 @postBP.route('/post/', methods=['post'])
 def addPost():
-    return '/post/' + \
-           str(dbMain.insertDbObject(dbModels.post(user_id= request.form.get('user_id'),
-                                                   title= request.form.get('title'),
-                                                   message= request.form.get('message')
-                                                   )
-                                     )
-               ), 201
+    post = dbModels.post(user_id= request.form.get('user_id'),
+                         title= request.form.get('title'),
+                         message= request.form.get('message'))
+    s = dbMain.Session()
+    s.add(post)
+    if request.form.get('project_id'):
+        p = dbMain.selectObjectByIdUsingSession(dbModels.project, int(request.form.get('project_id')), s)
+        p.posts.append(post)
+    s.flush()
+    s.commit()
+    return '/post/' + str(post.id), 201
 

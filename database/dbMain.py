@@ -32,7 +32,6 @@ def insertDbObject(object):
     session.commit()
     return object.id
 
-
 def getUserByUserName(username):
     session = Session()
     return session.query(dbModels.user).filter(dbModels.user.userName == username).first()
