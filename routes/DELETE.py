@@ -9,7 +9,8 @@ def deleteUserByID(id):
     try:
         dbMain.deleteObjectByID(dbModels.user, id)
         return '', 204
-    except AttributeError:
+    except AttributeError as e:
+        print(e)
         abort(404)
 
 @deleteBP.route('/post/<id>/', methods=['delete'])
