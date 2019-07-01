@@ -2,10 +2,12 @@ from flask import abort, Blueprint, request, jsonify
 import database.dbMain as dbMain
 import database.dbModels as dbModels
 import hashlib
+from flask_jwt_extended import get_jwt_identity, jwt_required
 
 patchBP = Blueprint('patchBP', __name__)
 
 @patchBP.route('/user/<id>/', methods=['patch'])
+@jwt_required
 def patchUserByID(id):
     try:
         s = dbMain.Session()
@@ -27,6 +29,7 @@ def patchUserByID(id):
         abort(404)
 
 @patchBP.route('/post/<id>/', methods=['patch'])
+@jwt_required
 def patchPostByID(id):
     try:
         print('patch post:', id)
@@ -44,6 +47,7 @@ def patchPostByID(id):
         abort(404)
 
 @patchBP.route('/project/<id>/', methods=['patch'])
+@jwt_required
 def deleteProjectByID(id):
     try:
         print('patch post:', id)

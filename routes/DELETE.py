@@ -1,10 +1,12 @@
 from flask import abort, Blueprint
 import database.dbMain as dbMain
 import database.dbModels as dbModels
+from flask_jwt_extended import get_jwt_identity, jwt_required
 
 deleteBP = Blueprint('deleteBP', __name__)
 
 @deleteBP.route('/user/<id>/', methods=['delete'])
+@jwt_required
 def deleteUserByID(id):
     try:
         dbMain.deleteObjectByID(dbModels.user, id)
@@ -14,6 +16,7 @@ def deleteUserByID(id):
         abort(404)
 
 @deleteBP.route('/post/<id>/', methods=['delete'])
+@jwt_required
 def deletePostByID(id):
     try:
         dbMain.deleteObjectByID(dbModels.post, id)
@@ -22,6 +25,7 @@ def deletePostByID(id):
         abort(404)
 
 @deleteBP.route('/project/<id>/', methods=['delete'])
+@jwt_required
 def deleteProjectByID(id):
     try:
         dbMain.deleteObjectByID(dbModels.project, id)
@@ -30,6 +34,7 @@ def deleteProjectByID(id):
         abort(404)
 
 @deleteBP.route('/user/<user_id>/contact/<contact_id>', methods=['delete'])
+@jwt_required
 def removeContact(user_id, contact_id):
     s = dbMain.Session()
     if user_id == contact_id:

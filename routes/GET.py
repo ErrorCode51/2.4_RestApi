@@ -1,6 +1,8 @@
 from flask import abort, Blueprint, jsonify
 import database.dbMain as dbMain
 import database.dbModels as dbModels
+from flask_jwt_extended import get_jwt_identity, jwt_required
+import authentication
 
 getBP = Blueprint('getBP', __name__) # a blueprint to add all routes to, so the Flask instance can import them in one line of code
 
@@ -8,7 +10,7 @@ def copy_without_keys(d, keys):
     return {x: d[x] for x in d if x not in keys}
 
 
-def toJson(jsonDict):
+def toJsonResponse(jsonDict):
     jsonDict = copy_without_keys(jsonDict, ['_sa_instance_state'])
     return jsonify(jsonDict)
 
@@ -23,26 +25,36 @@ def getUserDict(user):
     return userDict
 
 
-def genUserJson(user):
+def genUserJson(user, fullData=False):
     if not isinstance(user, dbModels.user):
         raise AttributeError('Input is not a user object')
     userDict = getUserDict(user)
-    return toJson(userDict)
+    if not fullData:
+        userDict = copy_without_keys(userDict, ['email', 'passwordHash'])
+    return toJsonResponse(userDict)
 
 
 @getBP.route('/user/<id>/', methods=['get'])
+@jwt_required
 def getUserByID(id):
     data = dbMain.selectObjectById(dbModels.user, id)
+    getFullData = False
+    if get_jwt_identity() == data.userName:
+        getFullData = True
     try:
-        return(genUserJson(data), 200)
+        return(genUserJson(data, getFullData), 200)
     except AttributeError as e:
         print(e)
         abort(404)
 
 
 @getBP.route('/user/email/<email>/', methods=['get'])
+@jwt_required
 def getUserByEmail(email):
     data = dbMain.getUserByEmail(email)
+    getFullData = False
+    if get_jwt_identity() == data.userName:
+        getFullData = True
     try:
         return(genUserJson(data), 200)
     except AttributeError:
@@ -50,18 +62,25 @@ def getUserByEmail(email):
 
 
 @getBP.route('/user/all/', methods=['get'])
+@jwt_required
 def getAllUsers():
     try:
+        if not authentication.isAdmin(get_jwt_identity()):
+            abort(403)
         users = dbMain.selectAllObjectByType(dbModels.user)
-        return(toJson({'users': [getUserDict(u) for u in users]}))
+        return(toJsonResponse({'users': [getUserDict(u) for u in users]}))
     except AttributeError as e:
         print(e)
         abort(404)
 
 
 @getBP.route('/user/username/<username>/', methods=['get'])
+@jwt_required
 def getUserByName(username):
     data = dbMain.getUserByUserName(username)
+    getFullData = False
+    if get_jwt_identity() == data.userName:
+        getFullData = True
     try:
         return(genUserJson(data)), 200
     except AttributeError:
@@ -72,7 +91,7 @@ def getUserByName(username):
 def getPostByID(post_id):
     data = dbMain.selectObjectById(dbModels.post, post_id)
     try:
-        return(toJson(data.__dict__), 200)
+        return(toJsonResponse(data.__dict__), 200)
     except AttributeError as e:
         print(e)
         abort(404)
@@ -86,7 +105,7 @@ def getProjectByID(id):
     projectDict['participants'] = (lambda participants: None if not participants else [p.id for p in participants])(project.participants)
     projectDict['posts'] = (lambda posts: None if not posts else [p.id for p in posts])(project.posts)
     try:
-        return toJson(project.__dict__), 200
+        return toJsonResponse(project.__dict__), 200
     except AttributeError as e:
         print(e)
         abort(404)

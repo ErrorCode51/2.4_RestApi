@@ -1,2 +1,3 @@
 Flask==1.0.3
+Flask_JWT_Extended==3.19.0
 SQLAlchemy==1.3.4

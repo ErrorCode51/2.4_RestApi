@@ -106,3 +106,6 @@ venv.bak/
 
 # database files
 *.db
+
+# configuration files
+auth.conf

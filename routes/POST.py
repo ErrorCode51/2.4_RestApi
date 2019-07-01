@@ -2,11 +2,12 @@ from flask import abort, Blueprint, request
 import database.dbMain as dbMain
 import database.dbModels as dbModels
 import hashlib
-import sqlalchemy
+from flask_jwt_extended import get_jwt_identity, jwt_required
 
 postBP = Blueprint('postBP', __name__)
 
 @postBP.route('/user/', methods=['post'])
+@jwt_required
 def postUser():
     return '/user/' +\
            str(dbMain.insertDbObject(dbModels.user(userName= request.form.get('username'),
@@ -19,6 +20,7 @@ def postUser():
 
 
 @postBP.route('/user/<user_id>/contact/', methods=['post'])
+@jwt_required
 def addPContacts(user_id):
     contactID = int(request.form.get('contact_id'))
     s = dbMain.Session()
@@ -33,6 +35,7 @@ def addPContacts(user_id):
 
 
 @postBP.route('/project/', methods=['post'])
+@jwt_required
 def postProject():
     return '/project/' +\
            str(dbMain.insertDbObject(dbModels.project(ownerId= int(request.form.get('owner_id')),
@@ -43,6 +46,7 @@ def postProject():
                ), 201
 
 @postBP.route('/project/<project_id>/participant/', methods=['post'])
+@jwt_required
 def addParticipantToProject(project_id):
     s = dbMain.Session()
     p = dbMain.selectObjectByIdUsingSession(dbModels.project, project_id, s)
@@ -52,6 +56,7 @@ def addParticipantToProject(project_id):
     return '/project/' + str(project_id), 205
 
 @postBP.route('/post/', methods=['post'])
+@jwt_required
 def addPost():
     post = dbModels.post(user_id= request.form.get('user_id'),
                          title= request.form.get('title'),
