@@ -196,5 +196,8 @@ def check_token_validity(token):
 @jwt.token_in_blacklist_loader
 def check_if_token_in_blacklist(decrypted_token):
     # Checks if the user token is blacklisted (logged out)
-    jti = get_raw_jwt()['jti']
+    try:
+        jti = get_raw_jwt()['jti']
+    except:
+        return False
     return check_token_validity(jti)

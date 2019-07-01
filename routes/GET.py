@@ -75,6 +75,7 @@ def getAllUsers():
 
 
 @getBP.route('/post/<post_id>/', methods=['get'])
+@jwt_required
 def getPostByID(post_id):
     data = dbMain.selectObjectById(dbModels.post, post_id)
     try:
@@ -85,8 +86,8 @@ def getPostByID(post_id):
 
 
 @getBP.route('/project/<id>/', methods=['get'])
+@jwt_required
 def getProjectByID(id):
-    print('/project/<id>/')
     project = dbMain.selectObjectById(dbModels.project, id)
     projectDict = project.__dict__
     projectDict['participants'] = (lambda participants: None if not participants else [p.id for p in participants])(project.participants)
@@ -96,3 +97,18 @@ def getProjectByID(id):
     except AttributeError as e:
         print(e)
         abort(404)
+
+
+@getBP.route('/project/all', methods= ['get'])
+def getAllProjects():
+    projects = [copy_without_keys(i.__dict__, ['_sa_instance_state']) for i in dbMain.selectAllObjectByType(dbModels.project)]
+    return toJsonResponse({'projects': projects})
+
+@getBP.route('/project/test', methods= ['get'])
+def createTestProject():
+    dbMain.insertDbObject(dbModels.project(ownerId=int(1),
+                                           name= 'Test Project',
+                                           description='This is a project'
+                                           )
+                          )
+    return 'Created test project'
