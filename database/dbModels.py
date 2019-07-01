@@ -18,19 +18,15 @@ contact = Table('contact', Base.metadata,
 )
 
 
-# a post in a project, similar to a post in a facebook group
-post_in_project = Table('post_in_project', Base.metadata,
-        Column('post', Integer, ForeignKey('post.id')),
-        Column('project', Integer, ForeignKey('project.id'))
-)
-
-
 # a user account
 class user(Base):
     __tablename__ = 'user'
     id = Column(Integer, primary_key=True)
-    userName = Column(String(32), nullable=False)
+    firstName = Column(String(128), nullable=False)
+    lastName = Column(String(128), nullable=False)
     email = Column(String, nullable=False, unique= True)
+    job = Column(String(128), nullable=False)
+    skill = Column(String(128), nullable=False)
     passwordHash = Column(String, nullable=False)
     profilePic = Column(String)
     projects = relationship('project', secondary= project_participation)
@@ -55,4 +51,11 @@ class project(Base):
     description = Column(String)                                            # (optional), a description of the project
     participants = relationship('user', secondary= project_participation)   # the participants of this project
     posts = relationship('post')
-    # TODO: link posts to projects
+
+
+class refoked_token(Base):
+    __tablename__ = 'revoked_token'
+    id = Column(Integer, primary_key=True)
+    jti = Column(String, nullable= False)
+
+

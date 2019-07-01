@@ -1,7 +1,7 @@
 from flask import abort, Blueprint, request
 import database.dbMain as dbMain
 import database.dbModels as dbModels
-import hashlib
+import routes.account as account
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
 postBP = Blueprint('postBP', __name__)
@@ -12,7 +12,7 @@ def postUser():
     return '/user/' +\
            str(dbMain.insertDbObject(dbModels.user(userName= request.form.get('username'),
                                                    email= request.form.get('email'),
-                                                   passwordHash = hashlib.sha1(bytes(request.form.get('password'), 'utf-8')).hexdigest(),
+                                                   passwordHash = account.genPasswordHash(request.form.get('password')),
                                                    profilePic = None  #TODO: dit implementeren
                                                    )
                                      )

@@ -74,19 +74,6 @@ def getAllUsers():
         abort(404)
 
 
-@getBP.route('/user/username/<username>/', methods=['get'])
-@jwt_required
-def getUserByName(username):
-    data = dbMain.getUserByUserName(username)
-    getFullData = False
-    if get_jwt_identity() == data.userName:
-        getFullData = True
-    try:
-        return(genUserJson(data)), 200
-    except AttributeError:
-        abort(404)
-
-
 @getBP.route('/post/<post_id>/', methods=['get'])
 def getPostByID(post_id):
     data = dbMain.selectObjectById(dbModels.post, post_id)
