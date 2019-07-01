@@ -187,10 +187,7 @@ def add_token(token):
 
 def check_token_validity(token):
     # Checks token's validity
-    cursor = get_db().cursor()
-    sql = "SELECT jti FROM revoked_tokens WHERE jti ='" + token + "'"
-    cursor.execute(sql)
-    data = cursor.fetchall()
+    data = dbMain.getRevokedTokenByJti(token)
     if data:
         return True
     return False
@@ -199,5 +196,5 @@ def check_token_validity(token):
 @jwt.token_in_blacklist_loader
 def check_if_token_in_blacklist(decrypted_token):
     # Checks if the user token is blacklisted (logged out)
-    jti = decrypted_token['jti']
+    jti = get_raw_jwt()['jti']
     return check_token_validity(jti)

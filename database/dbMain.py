@@ -42,3 +42,8 @@ def deleteObjectByID(table, id):
     session = Session()
     session.query(table).filter(table.id == id).delete()
     session.commit()
+
+
+def getRevokedTokenByJti(jti):
+    session = Session()
+    return session.query(dbModels.refoked_token).filter(dbModels.refoked_token.jti == jti).first()
