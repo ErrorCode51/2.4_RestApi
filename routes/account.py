@@ -3,11 +3,12 @@ from flask_jwt_extended import create_access_token, create_refresh_token, get_ra
 import hashlib
 import database.dbMain as dbMain
 import database.dbModels as dbModels
+from authentication import jwt
 
 accountBP = Blueprint('accountBP', __name__)
 
 def genPasswordHash(password):
-    passwordHash = hashlib.sha1(bytes(request.form.get('password'), 'utf-8')).hexdigest()
+    return  hashlib.sha1(bytes(request.form.get('password'), 'utf-8')).hexdigest()
 
 @accountBP.route("/login", methods=["POST"])
 def login_function():
@@ -27,15 +28,16 @@ def login_function():
         response_object = general_fail_response()
         return make_response(jsonify(response_object)), 200
 
-    access_token = create_access_token(identity=user)
-    refresh_token = create_refresh_token(identity=user)
+    access_token = create_access_token(identity=username)
+    refresh_token = create_refresh_token(identity=username)
 
     response_object = succesfully_logged_in(user, access_token, refresh_token)
     return make_response(jsonify(response_object)), 200
 
 
 @accountBP.route("/register", methods=["POST"])
-def register_function(user, password, first_name, last_name, job, skill):
+def register_function():
+    print('register')
     # Checks if user already exists in database. If so, returns error message.
     #  Next, it hashes the password
     # and enters account information in database. It will then return a success message to the front end. If anything
@@ -49,6 +51,7 @@ def register_function(user, password, first_name, last_name, job, skill):
 
     data = dbMain.getUserByEmail(user)
     if data:
+        print('user exists')
         response_object = user_exists()
         return make_response(jsonify(response_object)), 200
 
@@ -63,9 +66,10 @@ def register_function(user, password, first_name, last_name, job, skill):
         access_token = create_access_token(identity=user)
         refresh_token = create_refresh_token(identity=user)
         response_object = successfully_registered(access_token, refresh_token)
+        print('successfull registration')
         return make_response(jsonify(response_object)), 200
-
     except:
+        print('failure')
         response_object = general_fail_response()
         return make_response(jsonify(response_object)), 200
 
@@ -180,3 +184,20 @@ def general_fail_response():
 def add_token(token):
     # Adds revoked token to database
     dbMain.insertDbObject(dbModels.refoked_token(jti= token))
+
+def check_token_validity(token):
+    # Checks token's validity
+    cursor = get_db().cursor()
+    sql = "SELECT jti FROM revoked_tokens WHERE jti ='" + token + "'"
+    cursor.execute(sql)
+    data = cursor.fetchall()
+    if data:
+        return True
+    return False
+
+
+@jwt.token_in_blacklist_loader
+def check_if_token_in_blacklist(decrypted_token):
+    # Checks if the user token is blacklisted (logged out)
+    jti = decrypted_token['jti']
+    return check_token_validity(jti)
