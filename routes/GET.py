@@ -1,7 +1,7 @@
 from flask import abort, Blueprint, jsonify
 import database.dbMain as dbMain
 import database.dbModels as dbModels
-from flask_jwt_extended import get_jwt_identity, jwt_required
+from flask_jwt_extended import get_jwt_identity, jwt_required, jwt_refresh_token_required
 import authentication
 
 getBP = Blueprint('getBP', __name__) # a blueprint to add all routes to, so the Flask instance can import them in one line of code
@@ -15,27 +15,27 @@ def toJsonResponse(jsonDict):
     return jsonify(jsonDict)
 
 
-def getUserDict(user):
+def getUserDict(user, fullData=False):
     if not isinstance(user, dbModels.user):
         raise AttributeError('Input is not a user object')
     userDict = user.__dict__
     userDict['profilePic'] = user.profilePic
     userDict['contacts'] = (lambda contacts: None if not contacts else [c.id for c in contacts])(user.contacts)
     userDict = copy_without_keys(userDict, ['_sa_instance_state'])
+    if not fullData:
+        userDict = copy_without_keys(userDict, ['email', 'passwordHash'])
     return userDict
 
 
 def genUserJson(user, fullData=False):
     if not isinstance(user, dbModels.user):
         raise AttributeError('Input is not a user object')
-    userDict = getUserDict(user)
-    if not fullData:
-        userDict = copy_without_keys(userDict, ['email', 'passwordHash'])
+    userDict = getUserDict(user, fullData)
     return toJsonResponse(userDict)
 
 
 @getBP.route('/user/<id>/', methods=['get'])
-@jwt_required
+@jwt_refresh_token_required
 def getUserByID(id):
     data = dbMain.selectObjectById(dbModels.user, id)
     getFullData = False
@@ -49,7 +49,7 @@ def getUserByID(id):
 
 
 @getBP.route('/user/email/<email>/', methods=['get'])
-@jwt_required
+@jwt_refresh_token_required
 def getUserByEmail(email):
     data = dbMain.getUserByEmail(email)
     getFullData = False
@@ -62,7 +62,7 @@ def getUserByEmail(email):
 
 
 @getBP.route('/user/all/', methods=['get'])
-@jwt_required
+@jwt_refresh_token_required
 def getAllUsers():
     try:
         if not authentication.isAdmin(get_jwt_identity()):
@@ -75,7 +75,7 @@ def getAllUsers():
 
 
 @getBP.route('/post/<post_id>/', methods=['get'])
-@jwt_required
+@jwt_refresh_token_required
 def getPostByID(post_id):
     data = dbMain.selectObjectById(dbModels.post, post_id)
     try:
@@ -86,7 +86,7 @@ def getPostByID(post_id):
 
 
 @getBP.route('/project/<id>/', methods=['get'])
-@jwt_required
+@jwt_refresh_token_required
 def getProjectByID(id):
     project = dbMain.selectObjectById(dbModels.project, id)
     projectDict = project.__dict__
@@ -100,8 +100,16 @@ def getProjectByID(id):
 
 
 @getBP.route('/project/all', methods= ['get'])
+@jwt_refresh_token_required
 def getAllProjects():
-    projects = [copy_without_keys(i.__dict__, ['_sa_instance_state']) for i in dbMain.selectAllObjectByType(dbModels.project)]
+    projectsRaw = dbMain.selectAllObjectByType(dbModels.project)
+    projects = []
+    for p in projectsRaw:
+        projectDict = p.__dict__
+        projectDict = copy_without_keys(projectDict, ['_sa_instance_state'])
+        owner = dbMain.selectObjectById(dbModels.user, p.ownerId)
+        projectDict["owner"] = getUserDict(owner)
+        projects.append(projectDict)
     return toJsonResponse({'projects': projects})
 
 @getBP.route('/project/test', methods= ['get'])
@@ -112,3 +120,16 @@ def createTestProject():
                                            )
                           )
     return 'Created test project'
+
+@getBP.route('/project/mine', methods= ['get'])
+@jwt_refresh_token_required
+def getAllUsersProjects():
+    owner = dbMain.getUserByEmail(get_jwt_identity())
+    projectsRaw = dbMain.getProjectsByOwnerID(owner.id)
+    projects = []
+    for p in projectsRaw:
+        projectDict = p.__dict__
+        projectDict = copy_without_keys(projectDict, ['_sa_instance_state'])
+        projectDict["owner"] = getUserDict(owner)
+        projects.append(projectDict)
+    return toJsonResponse({'projects': projects})

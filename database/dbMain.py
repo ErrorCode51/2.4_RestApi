@@ -47,3 +47,8 @@ def deleteObjectByID(table, id):
 def getRevokedTokenByJti(jti):
     session = Session()
     return session.query(dbModels.refoked_token).filter(dbModels.refoked_token.jti == jti).first()
+
+
+def getProjectsByOwnerID(id):
+    session = Session()
+    return session.query(dbModels.project).filter(dbModels.project.ownerId == id)
