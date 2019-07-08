@@ -38,6 +38,10 @@ def getUserByEmail(email):
     return session.query(dbModels.user).filter(dbModels.user.email == email).first()
 
 
+def getUserByEmailUsingSession(email, session):
+    return session.query(dbModels.user).filter(dbModels.user.email == email).first()
+
+
 def deleteObjectByID(table, id):
     session = Session()
     session.query(table).filter(table.id == id).delete()
@@ -52,3 +56,8 @@ def getRevokedTokenByJti(jti):
 def getProjectsByOwnerID(id):
     session = Session()
     return session.query(dbModels.project).filter(dbModels.project.ownerId == id)
+
+def getProjectsByParticipant(id):
+    session = Session()
+    u = selectObjectById(dbModels.user, id)
+    return u.projects

@@ -15,66 +15,90 @@ def toJsonResponse(jsonDict):
     return jsonify(jsonDict)
 
 
-def getUserDict(user, fullData=False):
+def getUserDict(user, fullData=False, getPosts=False):
     if not isinstance(user, dbModels.user):
         raise AttributeError('Input is not a user object')
     userDict = user.__dict__
-    userDict['profilePic'] = user.profilePic
-    userDict['contacts'] = (lambda contacts: None if not contacts else [c.id for c in contacts])(user.contacts)
-    userDict = copy_without_keys(userDict, ['_sa_instance_state'])
     if not fullData:
         userDict = copy_without_keys(userDict, ['email', 'passwordHash'])
+    userDict = copy_without_keys(userDict, ['_sa_instance_state'])
+    if getPosts:
+        userDict['posts'] = [{'id': p.id, 'title': p.title, 'message': p.message} for p in user.posts]
+    userDict['profilePic'] = user.profilePic
+    userDict['contacts'] = (lambda contacts: None if not contacts else [{'user_id': c.id, 'name': (c.firstName + ' ' + c.lastName)} for c in contacts])(user.contacts)
     return userDict
 
 
-def genUserJson(user, fullData=False):
+def genUserJson(user, fullData=False, getPosts=False):
     if not isinstance(user, dbModels.user):
         raise AttributeError('Input is not a user object')
-    userDict = getUserDict(user, fullData)
+    userDict = getUserDict(user, fullData, getPosts)
     return toJsonResponse(userDict)
 
 
-@getBP.route('/user/<id>/', methods=['get'])
+@getBP.route('/user/<id>', methods=['get'])
 @jwt_refresh_token_required
 def getUserByID(id):
     data = dbMain.selectObjectById(dbModels.user, id)
     getFullData = False
-    if get_jwt_identity() == data.userName:
+    if get_jwt_identity() == data.email:
         getFullData = True
     try:
-        return(genUserJson(data, getFullData), 200)
+        user = dbMain.getUserByEmail(get_jwt_identity())
+
+        d = getUserDict(data, getFullData, True)
+        d['isContact'] = (data.id in [c.id for c in user.contacts])
+
+        return jsonify(d)
     except AttributeError as e:
         print(e)
         abort(404)
 
 
-@getBP.route('/user/email/<email>/', methods=['get'])
+@getBP.route('/user/email/<email>', methods=['get'])
 @jwt_refresh_token_required
 def getUserByEmail(email):
     data = dbMain.getUserByEmail(email)
     getFullData = False
-    if get_jwt_identity() == data.userName:
+    if get_jwt_identity() == data.email:
         getFullData = True
     try:
-        return(genUserJson(data), 200)
+        return(genUserJson(data, getFullData, True), 200)
     except AttributeError:
         abort(404)
 
 
-@getBP.route('/user/all/', methods=['get'])
+@getBP.route('/user/all', methods=['get'])
 @jwt_refresh_token_required
 def getAllUsers():
     try:
         if not authentication.isAdmin(get_jwt_identity()):
             abort(403)
         users = dbMain.selectAllObjectByType(dbModels.user)
-        return(toJsonResponse({'users': [getUserDict(u) for u in users]}))
+        return(toJsonResponse({'users': [getUserDict(u, True, True) for u in users]}))
     except AttributeError as e:
         print(e)
         abort(404)
 
+@getBP.route('/user', methods=['get'])
+@jwt_refresh_token_required
+def getUserFromJWT():
+    data = dbMain.getUserByEmail(get_jwt_identity())
+    try:
+        return (genUserJson(data, True, True), 200)
+    except AttributeError:
+        abort(404)
 
-@getBP.route('/post/<post_id>/', methods=['get'])
+
+def genPostDict(post):
+    postDict = post.__dict__
+    postDict = copy_without_keys(postDict, ['_sa_instance_state'])
+    postDict['author'] = getUserDict(dbMain.selectObjectById(dbModels.user, post.user_id))
+    return postDict
+
+
+
+@getBP.route('/post/<post_id>', methods=['get'])
 @jwt_refresh_token_required
 def getPostByID(post_id):
     data = dbMain.selectObjectById(dbModels.post, post_id)
@@ -85,15 +109,22 @@ def getPostByID(post_id):
         abort(404)
 
 
-@getBP.route('/project/<id>/', methods=['get'])
+def getProjectDict(project):
+    projectDict = project.__dict__
+    projectDict = copy_without_keys(projectDict, ['_sa_instance_state'])
+    owner = dbMain.selectObjectById(dbModels.user, project.ownerId)
+    projectDict["owner"] = getUserDict(owner)
+    projectDict["participants"] = (lambda participants: None if not participants else [getUserDict(u) for u in participants])(project.participants)
+    projectDict["posts"] = (lambda posts: None if not posts else [genPostDict(p) for p in posts])(project.posts)
+    return projectDict
+
+
+@getBP.route('/project/<id>', methods=['get'])
 @jwt_refresh_token_required
 def getProjectByID(id):
     project = dbMain.selectObjectById(dbModels.project, id)
-    projectDict = project.__dict__
-    projectDict['participants'] = (lambda participants: None if not participants else [p.id for p in participants])(project.participants)
-    projectDict['posts'] = (lambda posts: None if not posts else [p.id for p in posts])(project.posts)
     try:
-        return toJsonResponse(project.__dict__), 200
+        return toJsonResponse(getProjectDict(project)), 200
     except AttributeError as e:
         print(e)
         abort(404)
@@ -105,11 +136,7 @@ def getAllProjects():
     projectsRaw = dbMain.selectAllObjectByType(dbModels.project)
     projects = []
     for p in projectsRaw:
-        projectDict = p.__dict__
-        projectDict = copy_without_keys(projectDict, ['_sa_instance_state'])
-        owner = dbMain.selectObjectById(dbModels.user, p.ownerId)
-        projectDict["owner"] = getUserDict(owner)
-        projects.append(projectDict)
+        projects.append(getProjectDict(p))
     return toJsonResponse({'projects': projects})
 
 @getBP.route('/project/test', methods= ['get'])
@@ -128,8 +155,18 @@ def getAllUsersProjects():
     projectsRaw = dbMain.getProjectsByOwnerID(owner.id)
     projects = []
     for p in projectsRaw:
-        projectDict = p.__dict__
-        projectDict = copy_without_keys(projectDict, ['_sa_instance_state'])
-        projectDict["owner"] = getUserDict(owner)
-        projects.append(projectDict)
+        projects.append(getProjectDict(p))
+    return toJsonResponse({'projects': projects})
+
+@getBP.route('/project/participating', methods= ['get'])
+@jwt_refresh_token_required
+def getParticipatingProjects():
+    owner = dbMain.getUserByEmail(get_jwt_identity())
+    projectsRaw = dbMain.getProjectsByOwnerID(owner.id)
+    projectsRaw2 = dbMain.getProjectsByParticipant(owner.id)
+    projects = []
+    for p in projectsRaw:
+        projects.append(getProjectDict(p))
+    for p in projectsRaw2:
+        projects.append(getProjectDict(p))
     return toJsonResponse({'projects': projects})

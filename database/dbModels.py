@@ -31,6 +31,7 @@ class user(Base):
     profilePic = Column(String)
     projects = relationship('project', secondary= project_participation)
     contacts = relationship('user', secondary= contact, primaryjoin=id==contact.c.user1_id, secondaryjoin=id==contact.c.user2_id)
+    posts = relationship('post')
 
 
 # a post made by a user, similar to posts on traditional social media
