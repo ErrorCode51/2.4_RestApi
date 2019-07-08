@@ -33,6 +33,21 @@ def deleteProjectByID(id):
     except AttributeError:
         abort(404)
 
+
+@deleteBP.route('/project/<project_id>/participant', methods=['delete'])
+@jwt_refresh_token_required
+def deleteProjectParticipant(project_id):
+    try:
+        s = dbMain.Session()
+        p = dbMain.selectObjectByIdUsingSession(dbModels.project, project_id, s)
+        u = dbMain.getUserByEmailUsingSession(get_jwt_identity(), s)
+        p.participants.remove(u)
+        s.commit()
+        return '', 204
+    except AttributeError:
+        abort(404)
+
+
 @deleteBP.route('/user/<user_id>/contact', methods=['delete'])
 @jwt_refresh_token_required
 def removeContact(user_id):

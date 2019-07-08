@@ -123,8 +123,12 @@ def getProjectDict(project):
 @jwt_refresh_token_required
 def getProjectByID(id):
     project = dbMain.selectObjectById(dbModels.project, id)
+    user = dbMain.getUserByEmail(get_jwt_identity())
     try:
-        return toJsonResponse(getProjectDict(project)), 200
+        d = getProjectDict(project)
+        d['isParticipating'] = (user.id in [u.id for u in project.participants])
+        d['isOwner'] = (user.id == project.ownerId)
+        return jsonify(d)
     except AttributeError as e:
         print(e)
         abort(404)
