@@ -72,10 +72,8 @@ def getUserByEmail(email):
 @jwt_refresh_token_required
 def getAllUsers():
     try:
-        if not authentication.isAdmin(get_jwt_identity()):
-            abort(403)
         users = dbMain.selectAllObjectByType(dbModels.user)
-        return(toJsonResponse({'users': [getUserDict(u, True, True) for u in users]}))
+        return(toJsonResponse({'users': [getUserDict(u, False, True) for u in users]}))
     except AttributeError as e:
         print(e)
         abort(404)
